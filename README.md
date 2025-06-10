@@ -1,7 +1,4 @@
 # ecw-qaqc
 
-### Libraries downloaded:
-- pandas
-- sqlalchemy
-- python-dotenv // dotenv
-- psycopg2
+### Notes:
+- rely on `db-tools` for anything to do with the database
