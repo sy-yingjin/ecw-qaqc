@@ -1,0 +1,7 @@
+MIN_ID=980001
+MAX_ID=981008
+
+psql -U postgres -h 10.8.6.69 -p 5433 -d weather \
+  -t -A -F"," \
+  -c "SELECT * FROM observations_station WHERE id BETWEEN $MIN_ID AND $MAX_ID ORDER BY id;" > station-old.csv
+

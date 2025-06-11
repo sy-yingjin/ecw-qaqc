@@ -21,8 +21,8 @@ if __name__ == "__main__":
     yyyy = sys.argv[1]
     mm = sys.argv[2] 
 
-    # directory to get the files from, can be changed depending on where files are 
-    file_dir = Path('bak') 
+    # directory to get the files from, can be changed depending on where files are
+    file_dir = Path('bak')
     file = file_dir / f"{yyyy}/{file_prefix}-{yyyy}{mm}.csv"
 
     # extract data from csv, ignoring date_created and date_updated
