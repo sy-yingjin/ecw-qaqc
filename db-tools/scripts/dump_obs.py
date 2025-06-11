@@ -32,6 +32,6 @@ if __name__ == "__main__":
     end_date = start_date + timedelta(days=ndays) - timedelta(milliseconds=1)
     df = get_data(table_name, start_date, end_date)
 
-    out_file = out_dir / f"{yyyy}/{file_suffix}-{yyyy}{mm}.csv"
+    out_file = out_dir / f"{yyyy}/{file_suffix}-{yyyy}{mm}.csv" ## f is for file?
     out_file.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_file, index=False)

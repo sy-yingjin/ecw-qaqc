@@ -1,7 +1,8 @@
 # ecw-qaqc
 
 ### Notes:
-- rely on `db-tools` for anything to do with the database
+- rely on `db-tools` for anything to do with the database.
+- `bak` is excluded to avoid clutter in git repository and for free experimentation on data extraction from databases outside of ssh.
 
 ### Packages found in env folder:
 - cffi (1.16.0)

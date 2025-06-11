@@ -34,4 +34,4 @@ def get_data(table_name, start_date, end_date):
     sql_query = f"""SELECT *
         FROM {table_name}
         WHERE TIMESTAMP BETWEEN '{start_date}' AND '{end_date}'"""
-    return pd.read_sql(sql_query, DB_BAK_ENGINE) ## Why DB_BAK_ENGINE ???
+    return pd.read_sql(sql_query, DB_BAK_ENGINE)

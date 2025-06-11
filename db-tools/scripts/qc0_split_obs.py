@@ -26,7 +26,7 @@ if __name__ == "__main__":
     file = file_dir / f"{yyyy}/{file_prefix}-{yyyy}{mm}.csv"
 
     # extract data from csv, ignoring date_created and date_updated
-    # modfied the columns to be able to 
+    # modfied the columns to be able to get extra data from Davis
     df = pd.read_csv(file, usecols=[
         'timestamp','id','pres','rr','rh','temp','td','wdir','wspd',
         'wspdx','srad','hi','station_id','wchill','rain','tx','tn','wrun','thwi','thswi','senergy','sradx','uvi','uvdose','uvx','hdd','cdd','et','qc_level','wdirx',
