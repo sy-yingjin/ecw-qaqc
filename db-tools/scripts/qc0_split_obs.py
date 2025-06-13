@@ -14,7 +14,7 @@ def help_message(nargs):
 
 
 if __name__ == "__main__": 
-    nargs = len(sys.argv[1:])
+    nargs = len(sys.argv[1:]) # skips the python file
     if nargs != 2:
         help_message(nargs)
     file_prefix = 'observation'
@@ -29,8 +29,10 @@ if __name__ == "__main__":
     # modfied the columns to be able to get extra data from Davis
     df = pd.read_csv(file, usecols=[
         'timestamp','id','pres','rr','rh','temp','td','wdir','wspd',
-        'wspdx','srad','hi','station_id','wchill','rain','tx','tn','wrun','thwi','thswi','senergy','sradx','uvi','uvdose','uvx','hdd','cdd','et','qc_level','wdirx',
-
+        'wspdx','srad','hi','station_id','wchill',
+        # variables that lufft doesn't provide
+        'rain','tx','tn','wrun','thwi','thswi','senergy',
+        'sradx','uvi','uvdose','uvx','hdd','cdd','et','qc_level','wdirx',
     ]) 
 
     # get list of unique ids to sort data by station id 
