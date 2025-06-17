@@ -1,5 +1,11 @@
 # ecw-qaqc
 
+## Quality Level Guide
+1. `qc0_obs_splitstn.py` - divides the observations to per-station.
+2. `qc1_obs_missingcheck.py` - checks the completeness of each observation entry- returns an observation log of compiled missing percentages for every station of the yyyy mm requested.
+3. `qc2_obs_valuecheck.py` - checks the validity of the ranges provided.
+4. `qc3_obs_changecheck.py` - checks the validity of the change rate between observation entries.
+
 ### Notes:
 - rely on `db-tools` for anything to do with the database.
 
@@ -11,7 +17,6 @@
 ### Scripts/Files Edited:
 - `.env` - user authentication for Shaira Sy (intern of the project)
 - `dump_obs.py` - to extract observation data from `observations_mo_observation` (Davis database)
-- `qc0_split_obs.py` - variables are edited to accommodate Davis AWS
 
 ### Packages found in env folder:
 - cffi (1.16.0)

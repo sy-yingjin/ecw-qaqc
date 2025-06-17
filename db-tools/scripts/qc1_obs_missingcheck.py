@@ -6,7 +6,6 @@ import pandas as pd
 
 from pathlib import Path
 from calendar import monthrange
-import datetime
 
 
 def help_message(nargs):
@@ -33,8 +32,7 @@ if __name__ == "__main__":
 
     # indicate the date of log retrieval if there are files to log
     if files:
-        today = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        log = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{today}-log.txt"
+        log = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-qc1-log.txt"
         log.parent.mkdir(parents=True, exist_ok=True)
 
     # open file for logging while checks are run
@@ -72,20 +70,23 @@ if __name__ == "__main__":
                 'qc_level', 'wdirx',
             ])
             df['qc_level'] = 1
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+            df['day'] = df['timestamp'].dt.day
+            df['hour'] = df['timestamp'].dt.hour
+
             df = df.set_index('timestamp')
 
-            # completeness
-            observed = df['id'].notna().sum()
-            percentages = observed / calc_time * 100
-            # gets the missing rows in the .csv
-            missing = df['id'].isna().sum() + (calc_time - observed)
+            # completeness checking
             # total 'observed'
-            total_obs = len(df)
+            observed = len(df)
+            # gets the missing rows in the .csv
+            missing = calc_time - observed
+            percentages = missing / calc_time * 100
 
+            #TO-DO: Change output to a .csv file for easier load/visual
             f.write(f"STATION ID# {stn_id[0]}\n")
-            f.write(f"Percentage of complete data: {round(percentages, 2)}%\n")
-            f.write(f"Missing {missing} rows\n")
-            f.write(f"Observed Data: {observed} out of {total_obs} rows\n")
-            f.write(f"Expected Total Observations: {calc_time}\n\n")
+            f.write(f"Percentage of missing data: {round(percentages, 2)}%\n")
+            f.write(f"Missing {missing} rows and observed {observed} rows\n")
+            f.write(f"Expected total {calc_time}\n\n")
 
             df.to_csv(file)
