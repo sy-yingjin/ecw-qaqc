@@ -28,12 +28,12 @@ if __name__ == "__main__":
     # extract data from csv, ignoring date_created and date_updated
     # modfied the columns to be able to get extra data from Davis
     df = pd.read_csv(file, usecols=[
-        'timestamp','id','pres','rr','rh','temp','td','wdir','wspd',
-        'wspdx','srad','hi','station_id','wchill',
+        'timestamp', 'id', 'pres', 'rr', 'rh', 'temp', 'td', 'wdir', 'wspd',
+        'wspdx', 'srad', 'hi', 'station_id', 'wchill',
         # variables that lufft doesn't provide
-        'rain','tx','tn','wrun','thwi','thswi','senergy',
-        'sradx','uvi','uvdose','uvx','hdd','cdd','et','qc_level','wdirx',
-    ]) 
+        'rain', 'tx', 'tn', 'wrun', 'thwi', 'thswi', 'senergy',
+        'sradx', 'uvi', 'uvdose', 'uvx', 'hdd', 'cdd', 'et', 'qc_level', 'wdirx',
+    ])
 
     # get list of unique ids to sort data by station id 
     uniq_ids = df.station_id.unique()
