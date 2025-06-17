@@ -2,7 +2,16 @@
 
 ### Notes:
 - rely on `db-tools` for anything to do with the database.
-- `bak` is excluded to avoid clutter in git repository and for free experimentation on data extraction from databases outside of ssh.
+
+### Nav:
+- `DBTOOLS` - Collection of scripts interacting with the ECW database
+- `qc_scripts` - Unedited scripts made by Emily Limlengco for the Lufft AWS
+- `bak` - included in `.gitignore` to avoid clutter in the Git repository
+
+### Scripts/Files Edited:
+- `.env` - user authentication for Shaira Sy (intern of the project)
+- `dump_obs.py` - to extract observation data from `observations_mo_observation` (Davis database)
+- `qc0_split_obs.py` - variables are edited to accommodate Davis AWS
 
 ### Packages found in env folder:
 - cffi (1.16.0)
