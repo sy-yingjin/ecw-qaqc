@@ -15,9 +15,18 @@ def help_message(nargs):
     print(f"{sys.argv[0]} yyyy mm")
     sys.exit(2)
 
+# get the configuration for min-max values
+def get_minmax(file, var):
+    help_dir = Path('helpers')
+    config_file = help_dir / "qc2_config.csv"
 
-# TO-DO: make the min-max configuration easier
-# via .csv file table
+    # extract data from csv
+    config_df = pd.read_csv(config_file, usecols=[
+        'var','min','max'
+    ])
+    max = config_df.loc[(config_df['var'] == var), 'max'].iloc[0]
+    min = config_df.loc[(config_df['var'] == var), 'min'].iloc[0]
+    return [min, max]
 
 if __name__ == "__main__": 
     nargs = len(sys.argv[1:])
@@ -31,6 +40,21 @@ if __name__ == "__main__":
     main_dir = Path('bak')
     files = glob.glob(os.path.join(main_dir, f"{yyyy}/{mm}/*.csv"))
 
+    # get the previous log data csv
+    out_file = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
+
+    # extract data from csv
+    out_df = pd.read_csv(out_file, usecols=[
+        'qc_level', 'stn_id', 'qc1-missing_perc',
+        'qc1-expected_obs', 'qc1-actual_obs'
+    ])
+    # create new columns for qc2
+    out_df['timestamp'] = ''
+    out_df['id'] = ''
+    out_df['qc2-flagged_error'] = ''
+    out_df['qc2-flagged_var'] = ''
+    out_df['qc2-flagged_data'] = ''
+
     # indicate the date of log retrieval if there are files to log
     if files:
         log = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-qc2-log.txt"
@@ -38,8 +62,7 @@ if __name__ == "__main__":
 
     # open file for logging while checks run
     with open(log, 'w') as f:
-
-        f.write("===LEVEL 2: RANGE VALUE CHECKS===\nDatapoints outside valid range:\n\n")
+        f.write("===LEVEL 2: RANGE VALUE CHECKS===\nDatapoints outside valid range:\n")
 
         # loop through the files
         for file in files:
@@ -48,77 +71,50 @@ if __name__ == "__main__":
 
             print(f"Checking validity of data from station id {stn_id[0]}...")
 
+            f.write(f"\n\nOBSERVATIONS FLAGGED FROM STATION ID# {stn_id[0]}\n")
 
-            # Temperature: flagged if < 15C or > 40C
-            f.write("\nTimestamps where temperature outside accepted range (15C < temp < 40C):\n")
-            for index, value in df.loc[
-                (df['temp'] < 15) | (df['temp'] > 40), 'temp'
-            ].items():
-                f.write(f" - observed {value}C on {index}\n")
+            '''
+            VALIDITY RANGE CHECKS: Checks for if the data falls within the valid data range
+            will raise the `invalid range` flag
+
+            '''
+            test_range = ['temp', 'srad', 'pres', 'rh', 'wdir', 'wspd']
+            for variable in test_range:
+                f.write(f"\nTimestamps where {variable} is outside the accepted range:\n")
+                minmax = get_minmax(file, variable)
+
+                for index, value in df.loc[
+                    (df[variable] < minmax[0]) | (df[variable] > minmax[1]), variable
+                ].items():
+                    obs_id = df['id'].get(index)
+                    f.write(" - Flagged: `Invalid Range`\n")
+                    f.write(f" -- observed {value}\n")
+                    f.write(f" -- Station={stn_id[0]}, timestamp={index}\n")
+                    f.write(f" -- Obs_id={obs_id},\n")
+
+                    # store data into the dataframe
+                    out_df.loc[-1] = [2, stn_id[0],'','','',index,obs_id,'invalid range', variable, value]
+                    out_df.index += 1
+                    out_df.sort_index
+
+            '''
+            COHESIVE LOGIC CHECKS: Checks for contradictions or logic between variables
+            will raise the `incohesive_data` flag
+            '''
             
+            '''
+            CHANGE RATE CHECKS: Checks the temporal difference or sum of variables
+            will raise the `invalid_rate` flag
+            '''
+            # TO DO: investigate the rainfall rate in `pgAdmin4` to see what the range means from the slides
 
-            # Solar Radiation: flagged if < 0 or > 1200
-            f.write("\nTimestamps where solar radiation is outside accepted range (0 W/m^2 < srad < 1200 W/m^2):\n")
-            for index, value in df.loc[
-                (df['srad'] < 0) | (df['srad'] > 1200), 'srad'
-            ].items(): 
-                f.write(f" - observed {value} W/m^2 on {index}\n")
-            
-            # Solar Radiation: flagged if not NA at 7pm-5am
-            # i.e. 1800 - 0500
-            f.write("\nTimestamps where solar radiation is observed at nighttime (7pm-5am):\n")
-            for index, value in df.loc[
-                (df['srad'] > 0) & ((df['hour'] > 18) | (df['hour'] < 5)), 'srad'
-            ].items():
-                f.write(f" - observed {value} W/m^2 on {index}\n")
-
-
-            # Pressure: flagged if < 990mb or > 1020mb
-            f.write("\nTimestamps where pressure is outside accepted range (990mb < pres < 1020mb):\n")
-            for index, value in df.loc[
-                (df['pres'] < 990) | (df['pres'] > 1020), 'pres'
-            ].items(): 
-                f.write(f" - observed {value} mb on {index}\n")
-
-
-            # Humidity: flagged if < 0% or > 100%
-            f.write("\nTimestamps where relative humidity is outside accepted range (0% < rh < 100%):\n")
-            for index, value in df.loc[
-                (df['rh'] < 0) | (df['rh'] > 100), 'rh'
-            ].items(): 
-                f.write(f" - observed {value}% on {index}\n")
-
-            # Humidity: flag if 99% but rainfall is NA
-            f.write("\nTimestamps where relative humidity is high even though rainfall is undetected:\n")
-            for index, value in df.loc[
-                (df['rh'] == 99) & ((df['rr'].isna()) | (df['rr'] == 0)), 'rh'
-            ].items():
-                f.write(f" - observed {value}% on {index}\n")
-
-
-            # Wind Speed: flagged if < 0km/hr > 90km/hr
-            f.write("\nTimestamps where wind speed is outside accepted range (0 km/hr < wspd < 90 km/hr):\n")
-            for index, value in df.loc[
-                (df['wspd'] < 0) | (df['wspd'] > 90), 'wspd'
-            ].items():
-                f.write(f" - observed {value} degrees on {index}\n")
-
-
-            # Wind Direction: flagged if < 0deg or > 360deg
-            f.write("\nTimestamps where wind direction is outside accepted range (0deg < wdir < 360deg):\n")
-            for index, value in df.loc[
-                (df['wdir'] < 0) | (df['wdir'] > 360), 'wdir'
-            ].items(): 
-                f.write(f" - observed {value} degrees on {index}\n")
-
-            # Wind Direction: flag if exists but wspd = 0
-            f.write("\nTimestamps where wind direction exists when wind speed is undetected/zero:\n")
-            for index, value in df.loc[
-                ((df['wdir'].notna()) | (df['wdir'] > 0)) & (df['wspd'] == 0), 'wdir'
-            ].items():
-                f.write(f" - observed {value} degrees on {index}\n")
+            # output a csv
+            out_file = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
+            out_file.parent.mkdir(parents=True, exist_ok=True)
+            out_df.to_csv(out_file, index=False)
 
             # mark datapoints as within valid range
             df['qc_level'] = df['qc_level'].mask(df['qc_level'] == 1, other=2)
-
             df.to_csv(file)
+
+            

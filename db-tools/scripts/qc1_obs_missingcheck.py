@@ -28,65 +28,56 @@ if __name__ == "__main__":
     # get files from monthly directory
     main_dir = Path("bak")
     files = glob.glob(os.path.join(main_dir, f"{yyyy}/{mm}/*.csv"))
-    percentages = dict()
 
-    # indicate the date of log retrieval if there are files to log
-    if files:
-        log = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-qc1-log.txt"
-        log.parent.mkdir(parents=True, exist_ok=True)
+    # create a new out file to store log data
+    out_df = pd.DataFrame(columns=['qc_level','stn_id','qc1-missing_perc','qc1-expected_obs','qc1-actual_obs'])
 
-    # open file for logging while checks are run
-    with open(log, 'w') as f:
+    '''
+    the rate of observation retrieval per AWS should be 5 mins. so to determine the completeness of data,
+    observation results / (number of 5 minutes per month)
 
-        f.write("===LEVEL 1: OBSERVATION DATA COMPLETENESS CHECK===\n\n")
+    1 hr has 60mins (12x5); 1 day has 24hrs (12x24)
+    1 month = n-days x 288 five-minutes
+    '''
+    ndays = monthrange(int(yyyy), int(mm))[1]
+    expected_obs = ndays * 288
 
-        # get the num of days of the month
-        ndays = monthrange(int(yyyy), int(mm))[1]
+    # loop through the files
+    for file in files:
+        stn_id = re.findall(f"{yyyy}{mm}-([\\d]+).csv", os.path.basename(file))  # noqa: E501
+        print(f"Checking observation data of station id {stn_id[0]}...")
 
-        '''
-        the rate of observation retrieval per AWS should be 5 mins.
+        # get data, ensure data types are consistent and updated qc_level
+        df = pd.read_csv(file, usecols=[
+            'timestamp', 'id', 'pres', 'rr', 'rh', 'temp', 'td', 'wdir',
+            'wspd', 'wspdx', 'srad', 'hi', 'station_id', 'wchill',
+            'rain', 'tx', 'tn', 'wrun', 'thwi', 'thswi', 'senergy',
+            'sradx', 'uvi', 'uvdose', 'uvx', 'hdd', 'cdd', 'et',
+            'qc_level', 'wdirx',
+        ])
+        df['qc_level'] = 1
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        # add new columns for later qc_levels
+        df['day'] = df['timestamp'].dt.day
+        df['hour'] = df['timestamp'].dt.hour
+        df = df.set_index('timestamp')
 
-        to determine the completeness of data,
-        observation results / (number of 5 minutes per month)
+        df.to_csv(file)
 
-        1 hr has 60mins (12x5)
-        1 day has 24hrs (12x24)
-        1 month has n-days x 288 five-minutes
-        '''
-        calc_time = ndays * 288
 
-        # loop through the files
-        for file in files:
-            stn_id = re.findall(f"{yyyy}{mm}-([\\d]+).csv", os.path.basename(file))  # noqa: E501
-            print(f"Checking observation data of station id {stn_id[0]}...")
+        # MISSING CHECKING
+        # total observations
+        actual_obs = len(df)
+        # gets the missing rows in the .csv
+        missing = expected_obs - actual_obs
+        missing_perc = missing / expected_obs * 100
 
-            # get data, ensure data types are consistent and updated qc_level
-            df = pd.read_csv(file, usecols=[
-                'timestamp', 'id', 'pres', 'rr', 'rh', 'temp', 'td', 'wdir',
-                'wspd', 'wspdx', 'srad', 'hi', 'station_id', 'wchill',
-                # variables that lufft doesn't provide
-                'rain', 'tx', 'tn', 'wrun', 'thwi', 'thswi', 'senergy',
-                'sradx', 'uvi', 'uvdose', 'uvx', 'hdd', 'cdd', 'et',
-                'qc_level', 'wdirx',
-            ])
-            df['qc_level'] = 1
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
-            df['day'] = df['timestamp'].dt.day
-            df['hour'] = df['timestamp'].dt.hour
+        # store data into the dataframe
+        out_df.loc[-1] = [1, stn_id[0], round(missing_perc,2), expected_obs, actual_obs]
+        out_df.index += 1
+        out_df.sort_index
 
-            df = df.set_index('timestamp')
-
-            # completeness checking
-            # total 'observed'
-            observed = len(df)
-            # gets the missing rows in the .csv
-            missing = calc_time - observed
-            percentages = missing / calc_time * 100
-
-            #TO-DO: Change output to a .csv file for easier load/visual
-            f.write(f"STATION ID# {stn_id[0]}\n")
-            f.write(f"Percentage of missing data: {round(percentages, 2)}%\n")
-            f.write(f"Missing {missing} rows and observed {observed} rows\n")
-            f.write(f"Expected total {calc_time}\n\n")
-
-            df.to_csv(file)
+        # output a csv
+        out_file = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+        out_df.to_csv(out_file, index=False)

@@ -22,8 +22,8 @@ if __name__ == "__main__":
     mm = sys.argv[2] 
 
     # directory to get the files from, can be changed depending on where files are
-    file_dir = Path('bak')
-    file = file_dir / f"{yyyy}/{file_prefix}-{yyyy}{mm}.csv"
+    main_dir = Path('bak')
+    file = main_dir / f"{yyyy}/{file_prefix}-{yyyy}{mm}.csv"
 
     # extract data from csv, ignoring date_created and date_updated
     # modfied the columns to be able to get extra data from Davis
@@ -45,6 +45,6 @@ if __name__ == "__main__":
         df_dict[key] = df_dict[key].sort_values(by='timestamp')
 
         # create new monthly and station directory in folder
-        out_file = file_dir / f"{yyyy}/{mm}/{file_prefix}-{yyyy}{mm}-{key}.csv"
+        out_file = main_dir / f"{yyyy}/{mm}/{file_prefix}-{yyyy}{mm}-{key}.csv"
         out_file.parent.mkdir(parents=True, exist_ok=True)
         df_dict[key].to_csv(out_file, index=False)
