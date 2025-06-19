@@ -58,7 +58,6 @@ if __name__ == "__main__":
         df['qc_level'] = 1
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         # add new columns for later qc_levels
-        df['day'] = df['timestamp'].dt.day
         df['hour'] = df['timestamp'].dt.hour
         df = df.set_index('timestamp')
 

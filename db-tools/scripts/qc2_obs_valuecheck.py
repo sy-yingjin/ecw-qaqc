@@ -82,20 +82,6 @@ if __name__ == "__main__":
                 out_df.index += 1
                 out_df.sort_index
 
-        # Temperature
-        # minmax = get_minmax(file,'temp')
-        # # test_range = ['temp', 'srad', 'pres', 'rh', 'wdir', 'wspd']
-        # for index, value in df.loc[
-        #     (df['temp'] < 15) | (df['temp'] > 40), 'temp'
-        # ].items():
-        #     obs_id = df['id'].get(index)
-        #     print(f" - observed {value} at {stn_id[0]} at time {index}")
-
-        #     # store data into the dataframe
-        #     out_df.loc[-1] = [2, stn_id[0],'','','',index,obs_id,'invalid range', 'temp', value]
-        #     out_df.index += 1
-        #     out_df.sort_index
-
 
         '''=========================================
         COHESIVE LOGIC CHECKS: Checks for contradictions or logic between variables
@@ -112,17 +98,17 @@ if __name__ == "__main__":
             out_df.index += 1
             out_df.sort_index
             
-        # Temperature (temp) - Dewpoint (td) should be greater than 0.2
+        # Humidity is at 99% without rainfall and (temp-td) is less than 0.2
         for index, value in df.loc[
-            ((df['temp'] - df['td']) <= 0.2), 'td'
+            ((df['temp'] - df['td']) <= 0.2) & (df['rh'] == 99) & (df['rr'] == 0), 'rh'
         ].items():
             obs_id = df['id'].get(index)
 
             # store data into the dataframe
-            out_df.loc[-1] = [2, stn_id[0],'','','',index,obs_id,'incohesive data', 'td', value]
+            out_df.loc[-1] = [2, stn_id[0],'','','',index,obs_id,'incohesive data', 'rh', value]
             out_df.index += 1
             out_df.sort_index
-            
+
         # Wind Direction exists when Wind Speed is 0
         for index, value in df.loc[
             (df['wdir'].notna()) & (df['wspd'] == 0), 'wdir'

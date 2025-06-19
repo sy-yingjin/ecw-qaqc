@@ -28,26 +28,45 @@ if __name__ == "__main__":
     main_dir = Path('bak')
     files = glob.glob(os.path.join(main_dir, f"{yyyy}/{mm}/*.csv"))
 
-    # indicate the date of log retrieval if there are files to log
-    if files:
-        log = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-qc2-log.txt"
-        log.parent.mkdir(parents=True, exist_ok=True)
+    # get the previous log data csv
+    out_file = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
 
-    # open file for logging while checks run
-    with open(log, 'w') as f:
-
-        f.write("===LEVEL 3: STEP VALUE CHECKS===\n")
-        f.write("Datapoints with time-based differences outside valid range by station:\n\n")
-
-        # loop through the files
-        for file in files:
-            df = pd.read_csv(file, index_col=0)
-            stn_id = re.findall(f"{yyyy}{mm}-([\\d]+).csv", os.path.basename(file))  # noqa: E501
-
-            # Convert timestamp to datetime object
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
-
-            print(f"Checking validity of data from station id {stn_id[0]}...")
+    # extract data from csv
+    out_df = pd.read_csv(out_file, usecols=[
+        'qc_level', 'stn_id', 'qc1-missing_perc',
+        'qc1-expected_obs', 'qc1-actual_obs', 'timestamp',
+        'id', 'flagged_error', 'qc2-flagged_var',
+        'qc2-flagged_data'
+    ])
 
 
-            
+    # loop through the files
+    for file in files:
+        df = pd.read_csv(file, index_col=0)
+        stn_id = re.findall(f"{yyyy}{mm}-([\\d]+).csv", os.path.basename(file))  # noqa: E501
+
+        print(f"Checking validity of data from station id {stn_id[0]}...")
+
+        '''=========================================
+        CHANGE RATE CHECKS: Checks the temporal difference or sum of variables
+        will raise the `invalid_rate` flag
+        '''
+
+        # get the time difference between each observation entry
+        # for x in range(len(df)):
+        #     df['time_diff'] = (pd.to_datetime(df.index[x]) - pd.to_datetime(df.index[x-1])).total_seconds()
+
+
+        
+
+        # output a csv
+        out_file = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+        out_df.to_csv(out_file, index=False)
+
+        # mark datapoints as within valid range
+        df['qc_level'] = df['qc_level'].mask(df['qc_level'] == 2, other=3)
+        df.to_csv(file)
+
+
+        

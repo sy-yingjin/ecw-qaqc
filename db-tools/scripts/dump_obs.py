@@ -21,7 +21,7 @@ if __name__ == "__main__":
     nargs = len(sys.argv[1:])
     if nargs != 2:
         help_message(nargs)
-    table_name = "observations_mo_observation"  # Changed to access Davis database
+    table_name = "observations_mo_observation"
     file_suffix = "observation"
     out_dir = Path("bak")
     yyyy = sys.argv[1]
