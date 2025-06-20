@@ -35,3 +35,10 @@ def get_data(table_name, start_date, end_date):
         FROM {table_name}
         WHERE TIMESTAMP BETWEEN '{start_date}' AND '{end_date}'"""
     return pd.read_sql(sql_query, DB_BAK_ENGINE)
+
+def get_stn():
+    sql_query = """SELECT id,name,station_type
+        FROM observations_station
+        ORDER BY id
+        """
+    return pd.read_sql(sql_query, DB_BAK_ENGINE)
