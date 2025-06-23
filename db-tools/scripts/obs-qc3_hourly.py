@@ -6,7 +6,6 @@ import re
 import pandas as pd
 
 from pathlib import Path
-from calendar import monthrange
 
 
 def help_message(nargs):
@@ -41,66 +40,44 @@ if __name__ == "__main__":
     main_dir = Path('bak')
     files = glob.glob(os.path.join(main_dir, f"{yyyy}/{mm}/*.csv"))
 
-    # create a csv to store quality check data
-    check_df = pd.DataFrame(columns=['qc_level','stn_id','qc1-missing_perc','qc1-expected_obs','qc1-actual_obs'])
-
-    # get the number of days in the month
-    ndays = monthrange(int(yyyy), int(mm))[1]
+    # get the previous log data csv
+    check_file = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
 
 
-    # loop through files
+    # loop through the files
     for file in files:
-        stn_id = re.findall(f"{yyyy}{mm}-([\\d]+).csv", os.path.basename(file)) # noqa: E501
-
-        print(f"Checking observation data of station id {stn_id[0]}...")
+        stn_id = re.findall(f"{yyyy}{mm}-([\\d]+).csv", os.path.basename(file))  # noqa: E501
         stn_type = get_stn_type(int(stn_id[0]))
 
-        # get columns excluding station_id, id created_on and updated_on
+        print(f"Converting {stn_id[0]} data to hourly reports...")
+
         if stn_type=='MO':
             # The observation data is from a Davis AWS
             col_names = [
-                'timestamp', 'id', 'qc_level',
+                'timestamp',
                 'pres', 'rr', 'rh', 'temp', 'td', 'wdir',
                 'wspd', 'wspdx', 'srad', 'hi', 'wchill',
                 'rain', 'tx', 'tn', 'wrun', 'thwi', 'thswi',
                 'senergy','sradx', 'uvi', 'uvdose',
                 'uvx', 'hdd', 'cdd', 'et', 'wdirx',
             ]
-            freq = 288
         elif stn_type=='SMS':
             # The observation data is from a Lufft AWS
             col_names = [
-                'timestamp', 'id', 'qc_level',
+                'timestamp',
                 'pres','rr','rh','temp','td','wdir','wspd',
                 'wspdx','srad','mslp','hi','wchill',
             ]
-            freq = 144
-        
+
         df = pd.read_csv(file, usecols=col_names)
         df = df[col_names]
-        df['qc_level'] = 1
-
         df['timestamp'] = pd.to_datetime(df['timestamp'])
-        df = df.set_index("timestamp")
+        
+        # Sort the main observation dataframe to an hourly state
+        # all observations will be averaged
+        hourly_df = df.groupby(pd.Grouper(key='timestamp',freq='h'))[col_names[1:]].mean().round(2)
+        hourly_df.insert(0, 'qc_level', 3)
 
-        # converts utc -> local time
-        df = df.tz_convert("Asia/Manila")
-        df.to_csv(file)
 
-        # know the frequency to know the expected observations
-        expected_obs = ndays * freq
-
-        # MISSING CHECK
-        actual_obs = len(df)
-        missing = expected_obs - actual_obs
-        missing_perc = missing / expected_obs * 100
-
-        # store check data into the check_df
-        check_df.loc[-1] = [1, stn_id[0], round(missing_perc,2), expected_obs, actual_obs]
-        check_df.index += 1
-        check_df.sort_index
-
-        # output the check_df into a csv file
-        check_file = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
-        check_file.parent.mkdir(parents=True, exist_ok=True)
-        check_df.to_csv(check_file, index=False)
+        # output a csv
+        hourly_df.to_csv(file)

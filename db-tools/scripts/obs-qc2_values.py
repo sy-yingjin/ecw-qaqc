@@ -50,6 +50,7 @@ if __name__ == "__main__":
         'qc1-expected_obs', 'qc1-actual_obs'
     ])
     # create new columns for qc2
+    check_df['id'] = ''
     check_df['timestamp'] = ''
     check_df['flagged_error'] = ''
     check_df['qc2-flagged_var'] = ''
@@ -77,7 +78,10 @@ if __name__ == "__main__":
             for index, value in df.loc[
                 (df[variable] < minmax[0]) | (df[variable] > minmax[1]), variable
             ].items():
-                check_df.loc[-1] = [2, stn_id[0],'','','',index,'invalid range', variable, value]
+                obs_id = df['id'].get(index)
+
+                # store data into the dataframe
+                check_df.loc[-1] = [2, stn_id[0],'','','',obs_id,index,'invalid range', variable, value]
                 check_df.index += 1
                 check_df.sort_index
 
@@ -90,8 +94,10 @@ if __name__ == "__main__":
         for index, value in df.loc[
             (df['srad'] > 0) & ((df.index.hour > 18) | (df.index.hour < 5)), 'srad'
         ].items():
+            obs_id = df['id'].get(index)
+            
             # store data into the dataframe
-            check_df.loc[-1] = [2, stn_id[0],'','','',index,'incohesive data', 'srad', value]
+            check_df.loc[-1] = [2, stn_id[0],'','','',obs_id,index,'incohesive data', 'srad', value]
             check_df.index += 1
             check_df.sort_index
             
@@ -99,8 +105,10 @@ if __name__ == "__main__":
         for index, value in df.loc[
             ((df['temp'] - df['td']) <= 0.2) & (df['rh'] == 99) & (df['rr'] == 0), 'rh'
         ].items():
+            obs_id = df['id'].get(index)
+            
             # store data into the dataframe
-            check_df.loc[-1] = [2, stn_id[0],'','','',index,'incohesive data', 'rh', value]
+            check_df.loc[-1] = [2, stn_id[0],'','','',obs_id,index,'incohesive data', 'rh', value]
             check_df.index += 1
             check_df.sort_index
 
@@ -108,8 +116,10 @@ if __name__ == "__main__":
         for index, value in df.loc[
             (df['wdir'].notna()) & (df['wspd'] == 0), 'wdir'
         ].items():
+            obs_id = df['id'].get(index)
+            
             # store data into the dataframe
-            check_df.loc[-1] = [2, stn_id[0],'','','',index,'incohesive data', 'wdir', value]
+            check_df.loc[-1] = [2, stn_id[0],'','','',obs_id,index,'incohesive data', 'wdir', value]
             check_df.index += 1
             check_df.sort_index
             
