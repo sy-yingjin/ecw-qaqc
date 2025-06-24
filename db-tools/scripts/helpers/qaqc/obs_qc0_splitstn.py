@@ -1,6 +1,7 @@
 import sys
 import pandas as pd
 from pathlib import Path
+
 from datetime import datetime
 import pytz
 from calendar import monthrange
@@ -17,14 +18,10 @@ def help_message(nargs):
     print(f"{sys.argv[0]} yyyy mm")
     sys.exit(2)
 
-if __name__ == "__main__":
-    nargs = len(sys.argv[1:])
-    if nargs != 2:
-        help_message(nargs)
+
+def qc0_splitstation(yyyy,mm):
     file_suffix = "observation"
     out_dir = Path("bak")
-    yyyy = sys.argv[1]
-    mm = sys.argv[2]
 
     # get an updated list of stations and their station type
     stn_df = get_stn()
@@ -59,3 +56,13 @@ if __name__ == "__main__":
 
             out_file.parent.mkdir(parents=True, exist_ok=True)
             df_dict[key].to_csv(out_file, index=False)
+
+
+if __name__ == "__main__":
+    nargs = len(sys.argv[1:])
+    if nargs != 2:
+        help_message(nargs)
+    yyyy = sys.argv[1]
+    mm = sys.argv[2]
+
+    qc0_splitstation(yyyy,mm)

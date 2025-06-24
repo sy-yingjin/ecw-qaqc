@@ -2,7 +2,6 @@ import sys
 import os
 import glob
 import re
-
 import pandas as pd
 
 from pathlib import Path
@@ -29,13 +28,8 @@ def get_stn_type(id):
     return aws
 
 
-if __name__ == "__main__":
-    nargs = len(sys.argv[1:])
-    if nargs != 2:
-        help_message(nargs)
+def qc1_missing(yyyy,mm):
     file_prefix = "observation"
-    yyyy = sys.argv[1]
-    mm = sys.argv[2]
 
     # get files from monthly directory
     main_dir = Path('bak')
@@ -104,3 +98,13 @@ if __name__ == "__main__":
         check_file = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
         check_file.parent.mkdir(parents=True, exist_ok=True)
         check_df.to_csv(check_file, index=False)
+
+
+if __name__ == "__main__":
+    nargs = len(sys.argv[1:])
+    if nargs != 2:
+        help_message(nargs)
+    yyyy = sys.argv[1]
+    mm = sys.argv[2]
+
+    qc1_missing(yyyy,mm)

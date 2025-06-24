@@ -2,7 +2,6 @@ import sys
 import os
 import glob
 import re
-
 import pandas as pd
 
 from pathlib import Path
@@ -28,20 +27,10 @@ def get_stn_type(id):
     return aws
 
 
-if __name__ == "__main__":
-    nargs = len(sys.argv[1:])
-    if nargs != 2:
-        help_message(nargs)
-    file_prefix = "observation"
-    yyyy = sys.argv[1]
-    mm = sys.argv[2]
-
+def qc3_hourly(yyyy,mm):
     # get files from monthly directory
     main_dir = Path('bak')
     files = glob.glob(os.path.join(main_dir, f"{yyyy}/{mm}/*.csv"))
-
-    # get the previous log data csv
-    check_file = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
 
 
     # loop through the files
@@ -81,3 +70,13 @@ if __name__ == "__main__":
 
         # output a csv
         hourly_df.to_csv(file)
+
+
+if __name__ == "__main__":
+    nargs = len(sys.argv[1:])
+    if nargs != 2:
+        help_message(nargs)
+    yyyy = sys.argv[1]
+    mm = sys.argv[2]
+
+    qc3_hourly(yyyy,mm)

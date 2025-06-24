@@ -46,3 +46,5 @@
 - typing_extensions (4.12.2)
 - tzdata (2024.1)
 - tzlocal (5.2)
+- pytest (8.4.1)
+-- colorama (0.4)
