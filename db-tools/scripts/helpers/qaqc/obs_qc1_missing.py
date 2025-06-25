@@ -4,6 +4,7 @@ import glob
 import re
 import pandas as pd
 
+from datetime import datetime
 from pathlib import Path
 from calendar import monthrange
 
@@ -15,6 +16,13 @@ def help_message(nargs):
         print("missing `month` parameter")
     print(f"{sys.argv[0]} yyyy mm")
     sys.exit(2)
+
+def validate_request(yyyy,mm):
+    input_date = pd.to_datetime(datetime.strptime(f"{yyyy}-{mm}-01", "%Y-%m-%d")).tz_localize('Asia/Manila')
+    current_date = pd.to_datetime(datetime.now()).tz_localize('Asia/Manila')
+    lim_date = pd.to_datetime(datetime.strptime("2010-01-01", "%Y-%m-%d")).tz_localize('Asia/Manila')
+
+    return (input_date < lim_date) or (input_date > current_date)
 
 def get_stn_type(id):
     stn_dir = Path('bak')
@@ -31,6 +39,11 @@ def get_stn_type(id):
 # Prerequisite/s: `obs_qc0_splitstn.py`
 def qc1_missing(yyyy,mm):
     file_prefix = "observation"
+
+    # is the requested year and month valid?
+    if validate_request(yyyy,mm):
+        print("There aren't any records for these dates.")
+        sys.exit(2)
 
     # get files from monthly directory
     main_dir = Path('bak')
@@ -51,25 +64,34 @@ def qc1_missing(yyyy,mm):
         stn_type = get_stn_type(int(stn_id[0]))
 
         # get columns excluding station_id, id created_on and updated_on
+        # TO DO: ADD TRY CATCH
+        # TO DO: MAKE A SCRIPT FOR COMMON VARIABLES
         if stn_type=='MO':
             # The observation data is from a Davis AWS
-            col_names = [
+            """col_names = [
                 'timestamp', 'id', 'qc_level',
                 'pres', 'rr', 'rh', 'temp', 'td', 'wdir',
                 'wspd', 'wspdx', 'srad', 'hi', 'wchill',
                 'rain', 'tx', 'tn', 'wrun', 'thwi', 'thswi',
                 'senergy','sradx', 'uvi', 'uvdose',
                 'uvx', 'hdd', 'cdd', 'et', 'wdirx',
-            ]
+            ]"""
             freq = 288
         elif stn_type=='SMS':
             # The observation data is from a Lufft AWS
-            col_names = [
+            """col_names = [
                 'timestamp', 'id', 'qc_level',
                 'pres','rr','rh','temp','td','wdir','wspd',
                 'wspdx','srad','mslp','hi','wchill',
-            ]
+            ]"""
             freq = 144
+        
+        # matching column data
+        col_names = [
+            'timestamp', 'id', 'qc_level',
+            'pres','rr','rh','temp','td','wdir',
+            'wspd','wspdx','srad','hi','wchill',
+        ]
         
         df = pd.read_csv(file, usecols=col_names)
         df = df[col_names]

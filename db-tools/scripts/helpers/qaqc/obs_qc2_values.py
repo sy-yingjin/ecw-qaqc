@@ -4,6 +4,7 @@ import glob
 import re
 import pandas as pd
 
+from datetime import datetime
 from pathlib import Path
 
 
@@ -14,6 +15,13 @@ def help_message(nargs):
         print("missing `month` parameter")
     print(f"{sys.argv[0]} yyyy mm")
     sys.exit(2)
+
+def validate_request(yyyy,mm):
+    input_date = pd.to_datetime(datetime.strptime(f"{yyyy}-{mm}-01", "%Y-%m-%d")).tz_localize('Asia/Manila')
+    current_date = pd.to_datetime(datetime.now()).tz_localize('Asia/Manila')
+    lim_date = pd.to_datetime(datetime.strptime("2010-01-01", "%Y-%m-%d")).tz_localize('Asia/Manila')
+
+    return (input_date < lim_date) or (input_date > current_date)
 
 # get the configuration for min-max values
 def get_minmax(file, var):
@@ -32,6 +40,11 @@ def get_minmax(file, var):
 # Prerequisite/s: `obs_qc0_splitstn.py`
 def qc2_values(yyyy,mm):
     file_prefix = 'observation'
+
+    # is the requested year and month valid?
+    if validate_request(yyyy,mm):
+        print("There aren't any records for these dates.")
+        sys.exit(2)
 
     # get files from monthly directory 
     main_dir = Path('bak')

@@ -1,5 +1,7 @@
 import sys
+import pandas as pd
 from pathlib import Path
+from datetime import datetime
 
 
 from helpers.qaqc import obs_qc0_splitstn
@@ -16,6 +18,13 @@ def help_message(nargs):
     print(f"{sys.argv[0]} yyyy mm")
     sys.exit(2)
 
+def validate_request(yyyy,mm):
+    input_date = pd.to_datetime(datetime.strptime(f"{yyyy}-{mm}-01", "%Y-%m-%d")).tz_localize('Asia/Manila')
+    current_date = pd.to_datetime(datetime.now()).tz_localize('Asia/Manila')
+    lim_date = pd.to_datetime(datetime.strptime("2010-01-01", "%Y-%m-%d")).tz_localize('Asia/Manila')
+
+    return (input_date < lim_date) or (input_date > current_date)
+
 
 if __name__ == "__main__":
     nargs = len(sys.argv[1:])
@@ -25,6 +34,11 @@ if __name__ == "__main__":
     out_dir = Path("../../bak")
     yyyy = sys.argv[1]
     mm = sys.argv[2]
+
+    # is the requested year and month valid?
+    if validate_request(yyyy,mm):
+        print("There aren't any records for these dates.")
+        sys.exit(2)
 
     print("\nRunning QC0 = Splitting Stations Script... \n")
     obs_qc0_splitstn.qc0_splitstation(yyyy,mm)

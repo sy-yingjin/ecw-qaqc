@@ -33,7 +33,9 @@ DB_BAK_ENGINE = sa.create_engine(
 def get_data(table_name, start_date, end_date):
     sql_query = f"""SELECT *
         FROM {table_name}
-        WHERE TIMESTAMP BETWEEN '{start_date}' AND '{end_date}'"""
+        WHERE TIMESTAMP BETWEEN '{start_date}' AND '{end_date}'
+        AND station_id != '36'
+        """
     return pd.read_sql(sql_query, DB_BAK_ENGINE)
 
 def get_stn():
