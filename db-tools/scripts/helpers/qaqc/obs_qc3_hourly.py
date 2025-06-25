@@ -17,7 +17,7 @@ def help_message(nargs):
 
 def get_stn_type(id):
     stn_dir = Path('bak')
-    stn_file = stn_dir / "stn/stn-type.csv"
+    stn_file = stn_dir / "stn-type.csv"
 
     # extract data from stn csv
     stn_df = pd.read_csv(stn_file, usecols=[
@@ -27,6 +27,7 @@ def get_stn_type(id):
     return aws
 
 
+# Running this file will before qc1 and qc2 will make their reports inaccurate
 def qc3_hourly(yyyy,mm):
     # get files from monthly directory
     main_dir = Path('bak')
@@ -38,7 +39,7 @@ def qc3_hourly(yyyy,mm):
         stn_id = re.findall(f"{yyyy}{mm}-([\\d]+).csv", os.path.basename(file))  # noqa: E501
         stn_type = get_stn_type(int(stn_id[0]))
 
-        print(f"Converting {stn_id[0]} data to hourly reports...")
+        print(f"Converting data to hourly reports for station id {stn_id[0]}...")
 
         if stn_type=='MO':
             # The observation data is from a Davis AWS

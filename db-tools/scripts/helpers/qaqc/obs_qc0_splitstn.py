@@ -27,7 +27,7 @@ def qc0_splitstation(yyyy,mm):
     stn_df = get_stn()
 
     # create a monthly and station directory in folder
-    stn_file = out_dir / "stn/stn-type.csv"
+    stn_file = out_dir / "stn-type.csv"
     stn_file.parent.mkdir(parents=True, exist_ok=True)
     stn_df.to_csv(stn_file,index=False)
 

@@ -18,7 +18,7 @@ def help_message(nargs):
 
 def get_stn_type(id):
     stn_dir = Path('bak')
-    stn_file = stn_dir / "stn/stn-type.csv"
+    stn_file = stn_dir / "stn-type.csv"
 
     # extract data from stn csv
     stn_df = pd.read_csv(stn_file, usecols=[
@@ -28,6 +28,7 @@ def get_stn_type(id):
     return aws
 
 
+# Prerequisite/s: `obs_qc0_splitstn.py`
 def qc1_missing(yyyy,mm):
     file_prefix = "observation"
 
@@ -95,7 +96,7 @@ def qc1_missing(yyyy,mm):
         check_df.sort_index
 
         # output the check_df into a csv file
-        check_file = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
+        check_file = main_dir / f"{yyyy}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
         check_file.parent.mkdir(parents=True, exist_ok=True)
         check_df.to_csv(check_file, index=False)
 

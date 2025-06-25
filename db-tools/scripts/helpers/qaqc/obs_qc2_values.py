@@ -29,6 +29,7 @@ def get_minmax(file, var):
     return [min, max]
 
 
+# Prerequisite/s: `obs_qc0_splitstn.py`
 def qc2_values(yyyy,mm):
     file_prefix = 'observation'
 
@@ -37,7 +38,7 @@ def qc2_values(yyyy,mm):
     files = glob.glob(os.path.join(main_dir, f"{yyyy}/{mm}/*.csv"))
 
     # get the previous log data csv
-    check_file = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
+    check_file = main_dir / f"{yyyy}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
 
     # extract data from csv
     check_df = pd.read_csv(check_file, usecols=[
@@ -120,7 +121,7 @@ def qc2_values(yyyy,mm):
             
 
         # output a csv
-        check_file = main_dir / f"{yyyy}/{mm}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
+        check_file = main_dir / f"{yyyy}/obs_logs/{file_prefix}-{yyyy}{mm}-log.csv"
         check_file.parent.mkdir(parents=True, exist_ok=True)
         check_df.to_csv(check_file, index=False)
 

@@ -26,11 +26,11 @@ if __name__ == "__main__":
     yyyy = sys.argv[1]
     mm = sys.argv[2]
 
-    print("Running QC0 = Splitting Stations Script... \n")
+    print("\nRunning QC0 = Splitting Stations Script... \n")
     obs_qc0_splitstn.qc0_splitstation(yyyy,mm)
-    print("Running QC1 = Getting Missing Percentage Script... \n")
+    print("\nRunning QC1 = Getting Missing Percentage Script... \n")
     obs_qc1_missing.qc1_missing(yyyy,mm)
-    print("Running QC2 = Confirming Observation Values Script... \n")
+    print("\nRunning QC2 = Confirming Observation Values Script... \n")
     obs_qc2_values.qc2_values(yyyy,mm)
-    print("Running QC3 = Converting Data to Hourly Reports Scipt... \n")
+    print("\nRunning QC3 = Converting Data to Hourly Reports Scipt... \n")
     obs_qc3_hourly.qc3_hourly(yyyy,mm)

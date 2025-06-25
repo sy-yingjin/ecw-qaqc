@@ -9,8 +9,9 @@
 - `qc_scripts` - Unedited scripts made by Emily Limlengco for the Lufft AWS
 - `bak` - included in `.gitignore` to avoid clutter in the Git repository
 - `dump_obs.py` - to extract observation data from `observations_mo_observation` (Davis database)
-- `helpers` - Holds essential files like `qc2_config.csv` and `db.py` needed for some of the scripts to run
-- `.env` - user authentication for Shaira Sy (intern of the project)
+- `helpers` - Directory that holds essential files like `qc2_config.csv` and `db.py` needed for some of the scripts to run
+- `qaqc` - Directory that holds the scripts for quality checking the Lufft and Davis AWS
+- `.env` - user authentication to access the database
 
 ## Quality Check Guide (for any AWS)
 ` NOTE: Assumes that the database has the appropriate columns for analysis like timestamp, id, qc_level, and station_id `
@@ -20,12 +21,10 @@
 4. `obs-qc3_hourly.py` - groups and converts each observation into hourly reports with their values averaged. (requires the help of `stn_type.csv`)
 5. (optional) `obs-qc4_change.py`
 
-## Quality Check Guide (for Davis AWS)
-1. `dump_obs.py` - retrives observation data from the database using PostGreSQL (requires the help of `db.py` and a `.env`)
-2. `qc0_obs_splitstn.py` - divides the observations to per-station.
-3. `qc1_obs_missingcheck.py` - checks the completeness of each observation entry- returns an observation log of compiled missing percentages for every station of the yyyy mm requested.
-4. `qc2_obs_valuecheck.py` - checks the validity of the ranges provided.
-5.  (optional) `qc3_obs_changecheck.py`
+### Expected Outputs:
+1. `{yyyy}/{mm}` - would include the hourly reports of each individual AWS available in `.csv` files.
+2. `{yyyy}/obs_logs` - would include the observation logs and reports of the missing percentage and flagged data found in the observation data. stored in `.csv` files by each year and month.
+
 
 ### Packages found in env folder:
 - cffi (1.16.0)
