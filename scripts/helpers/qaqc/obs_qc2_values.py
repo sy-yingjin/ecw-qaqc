@@ -1,53 +1,46 @@
-import sys
 import os
 import glob
 import re
 import pandas as pd
 
-from datetime import datetime
 from pathlib import Path
 
 
-def help_message(nargs):
-    if nargs == 0:
-        print("missing `year` parameter")
-    if nargs < 2:
-        print("missing `month` parameter")
-    print(f"{sys.argv[0]} yyyy mm")
-    sys.exit(2)
+# Prerequisite/s: `obs_qc0_splitstn.py`
 
-def validate_request(yyyy,mm):
-    input_date = pd.to_datetime(datetime.strptime(f"{yyyy}-{mm}-01", "%Y-%m-%d")).tz_localize('Asia/Manila')
-    current_date = pd.to_datetime(datetime.now()).tz_localize('Asia/Manila')
-    lim_date = pd.to_datetime(datetime.strptime("2010-01-01", "%Y-%m-%d")).tz_localize('Asia/Manila')
+# GLOBAL VARIABLES
+file_prefix = 'observation'
+main_dir = Path('bak')
+config_dir = Path('helpers')
 
-    return (input_date < lim_date) or (input_date > current_date)
+config_file = config_dir / "qc2_config.csv"
 
 # get the configuration for min-max values
-def get_minmax(file, var):
-    help_dir = Path('helpers')
-    config_file = help_dir / "qc2_config.csv"
+def get_minmax(config_file,var):
+    try:
+        # extract data from csv
+        config_df = pd.read_csv(config_file, usecols=[
+            'var','min','max'
+        ])
 
-    # extract data from csv
-    config_df = pd.read_csv(config_file, usecols=[
-        'var','min','max'
-    ])
-    max = config_df.loc[(config_df['var'] == var),'max'].item()
-    min = config_df.loc[(config_df['var'] == var),'min'].item()
-    return [min, max]
+        if var not in config_df['var'].values:
+            raise ValueError
+
+        max = config_df.loc[(config_df['var'] == var),'max'].item()
+        min = config_df.loc[(config_df['var'] == var),'min'].item()
+        return [min, max]
+        
+    except FileNotFoundError:
+        print("Can't locate the Configuration file")
+    except ValueError:
+        print("Unrecognized Variable Found")
+    except:  # noqa: E722
+        print("Something went wrong with getting the MinMax of Range Checking")
 
 
-# Prerequisite/s: `obs_qc0_splitstn.py`
 def qc2_values(yyyy,mm):
-    file_prefix = 'observation'
-
-    # is the requested year and month valid?
-    if validate_request(yyyy,mm):
-        print("There aren't any records for these dates.")
-        sys.exit(2)
-
+    
     # get files from monthly directory 
-    main_dir = Path('bak')
     files = glob.glob(os.path.join(main_dir, f"{yyyy}/{mm}/*.csv"))
 
     # get the previous log data csv
@@ -82,7 +75,8 @@ def qc2_values(yyyy,mm):
         '''
         test_range = ['temp', 'srad', 'pres', 'rh', 'wdir', 'wspd']
         for variable in test_range:
-            minmax = get_minmax(file, variable)
+            minmax = get_minmax(config_file,variable)
+            
 
             for index, value in df.loc[
                 (df[variable] < minmax[0]) | (df[variable] > minmax[1]), variable
@@ -141,13 +135,3 @@ def qc2_values(yyyy,mm):
         # mark datapoints as within valid range
         df['qc_level'] = df['qc_level'].mask(df['qc_level'] == 1, other=2)
         df.to_csv(file)
-
-
-if __name__ == "__main__":
-    nargs = len(sys.argv[1:])
-    if nargs != 2:
-        help_message(nargs)
-    yyyy = sys.argv[1]
-    mm = sys.argv[2]
-
-    qc2_values(yyyy,mm)
