@@ -14,6 +14,7 @@ file_suffix = "observation"
 out_dir = Path("bak")
 
 
+# pull all data about the stations from the database
 def get_stations():
     stn_df = get_stn()
 
@@ -21,7 +22,7 @@ def get_stations():
     stn_file.parent.mkdir(parents=True, exist_ok=True)
     stn_df.to_csv(stn_file,index=False)
 
-def split_station(yyyy,mm):
+def split_station(yyyy: int,mm: int):
     start_date = tz.localize(datetime.strptime(f"{yyyy}-{mm}-01", "%Y-%m-%d"))
     ndays = monthrange(int(yyyy), int(mm))[1]
     end_date = tz.localize(datetime.strptime(f"{yyyy}-{mm}-{ndays}", "%Y-%m-%d"))

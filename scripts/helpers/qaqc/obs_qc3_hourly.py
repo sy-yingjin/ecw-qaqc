@@ -1,55 +1,56 @@
-import sys
 import os
 import glob
 import re
 import pandas as pd
 
-from datetime import datetime
 from pathlib import Path
 
 
-def help_message(nargs):
-    if nargs == 0:
-        print("missing `year` parameter")
-    if nargs < 2:
-        print("missing `month` parameter")
-    print(f"{sys.argv[0]} yyyy mm")
-    sys.exit(2)
+# GLOBAL VARIABLES
+main_dir = Path('bak')
 
-def validate_request(yyyy,mm):
-    try:
-        input_date = pd.to_datetime(datetime.strptime(f"{yyyy}-{mm}-01", "%Y-%m-%d")).tz_localize('Asia/Manila')
-        current_date = pd.to_datetime(datetime.now()).tz_localize('Asia/Manila')
-        lim_date = pd.to_datetime(datetime.strptime("2010-01-01", "%Y-%m-%d")).tz_localize('Asia/Manila')
-
-        return (input_date < lim_date) or (input_date > current_date)
-    except:  # noqa: E722
-        print("The requested `yyyy` and `mm` isn't possible.")
-
-"""def get_stn_type(id):
-    stn_dir = Path('bak')
-    stn_file = stn_dir / "stn-type.csv"
-
-    # extract data from stn csv
-    stn_df = pd.read_csv(stn_file, usecols=[
-        'id', 'station_type'
-    ])
-    aws = stn_df.loc[(stn_df['id'] == (id)),'station_type'].item()
-    return aws"""
+# get columns excluding station_id, id created_on and updated_on
+def get_matching_columns() -> list[str]: 
+    # The observation data is from a Davis AWS
+    col_MO = [
+        'timestamp',
+        'pres', 'rr', 'rh', 'temp', 'td', 'wdir',
+        'wspd', 'wspdx', 'srad', 'hi', 'wchill',
+        'rain', 'tx', 'tn', 'wrun', 'thwi', 'thswi',
+        'senergy','sradx', 'uvi', 'uvdose',
+        'uvx', 'hdd', 'cdd', 'et', 'wdirx',
+    ]
+    # The observation data is from a Lufft AWS
+    col_SMS = [
+        'timestamp',
+        'pres','rr','rh','temp','td','wdir','wspd',
+        'wspdx','srad','mslp','hi','wchill',
+    ]
+    
+    try:        
+        # matching column data
+        col_names = [x for x in col_MO if x in col_SMS]
+        # Columns that are needed for the script to function
+        necessary_cols = ['timestamp',]
+        for item in necessary_cols:
+            if item not in col_names:
+                raise ValueError
+        if len(col_names) == 0:
+            raise KeyError  
+        return col_names
+    
+    except ValueError:
+        print("No Matching Columns Found: Missing Expected Columns")
+    except KeyError:
+        print("No Matching Columns Found: Empty CSV")
+    except: # noqa: E722
+        print("Something went wrong with getting matching columns")
 
 
 # Running this file will before qc1 and qc2 will make their reports inaccurate
 def qc3_hourly(yyyy,mm):
-
-    # is the requested year and month valid?
-    if validate_request(yyyy,mm):
-        print("There aren't any records for these dates.")
-        sys.exit(2)
-
     # get files from monthly directory
-    main_dir = Path('bak')
     files = glob.glob(os.path.join(main_dir, f"{yyyy}/{mm}/*.csv"))
-
 
     # loop through the files
     for file in files:
@@ -57,26 +58,8 @@ def qc3_hourly(yyyy,mm):
 
         print(f"Converting data to hourly reports for station id {stn_id[0]}...")
 
-        # get columns excluding station_id, id created_on and updated_on
-        # The observation data is from a Davis AWS
-        col_MO = [
-                'timestamp',
-                'pres', 'rr', 'rh', 'temp', 'td', 'wdir',
-                'wspd', 'wspdx', 'srad', 'hi', 'wchill',
-                'rain', 'tx', 'tn', 'wrun', 'thwi', 'thswi',
-                'senergy','sradx', 'uvi', 'uvdose',
-                'uvx', 'hdd', 'cdd', 'et', 'wdirx',
-            ]
-        
-        # The observation data is from a Lufft AWS
-        col_SMS = [
-                'timestamp',
-                'pres','rr','rh','temp','td','wdir','wspd',
-                'wspdx','srad','mslp','hi','wchill',
-            ]
-        
-        # matching column data
-        col_names = [x for x in col_SMS if x in col_MO]
+        # get matching columns
+        col_names = get_matching_columns()
 
         df = pd.read_csv(file, usecols=col_names)
         df = df[col_names]
@@ -89,13 +72,3 @@ def qc3_hourly(yyyy,mm):
 
         # output a csv
         hourly_df.to_csv(file)
-
-
-if __name__ == "__main__":
-    nargs = len(sys.argv[1:])
-    if nargs != 2:
-        help_message(nargs)
-    yyyy = sys.argv[1]
-    mm = sys.argv[2]
-
-    qc3_hourly(yyyy,mm)

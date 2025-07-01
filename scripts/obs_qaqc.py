@@ -9,7 +9,7 @@ from helpers.qaqc import obs_qc2_values
 from helpers.qaqc import obs_qc3_hourly
 
 
-def help_message(nargs):
+def help_message(nargs: int):
     if nargs == 0:
         print("missing `year` parameter")
     if nargs < 2:
@@ -17,7 +17,7 @@ def help_message(nargs):
     print(f"{sys.argv[0]} yyyy mm")
     sys.exit(2)
 
-def validate_request(yyyy,mm):
+def validate_request(yyyy: int,mm: int):
     input_date = pd.to_datetime(datetime.strptime(f"{yyyy}-{mm}-01", "%Y-%m-%d")).tz_localize('Asia/Manila')
     current_date = pd.to_datetime(datetime.now()).tz_localize('Asia/Manila')
     lim_date = pd.to_datetime(datetime.strptime("2010-01-01", "%Y-%m-%d")).tz_localize('Asia/Manila')

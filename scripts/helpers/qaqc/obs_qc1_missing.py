@@ -16,15 +16,15 @@ main_dir = Path('bak')
 stn_file = main_dir / "stn-type.csv"
 
 
-def get_stn_type(stn_file,id):
+def get_stn_type(stn_file: Path,id: int) -> str:
     try:
         # extract data from stn csv
         stn_df = pd.read_csv(stn_file, usecols=[
             'id', 'station_type'
         ])
-        if id not in stn_df['id'].values:
+        if id not in stn_df['id'].to_numpy(dtype=int):
             raise ValueError
-        aws = stn_df.loc[(stn_df['id'] == (id)),'station_type'].item()
+        aws = stn_df.loc[(stn_df['id'] == id),'station_type'].item()
         return aws
         
     except FileNotFoundError:
@@ -35,7 +35,7 @@ def get_stn_type(stn_file,id):
         print("Something went wrong with getting the Station List")
 
 # get columns excluding station_id, id created_on and updated_on
-def get_matching_columns(): 
+def get_matching_columns() -> list[str]: 
     # The observation data is from a Davis AWS
     col_MO = [
         'timestamp', 'id', 'qc_level',
@@ -51,6 +51,7 @@ def get_matching_columns():
         'pres','rr','rh','temp','td','wdir','wspd',
         'wspdx','srad','mslp','hi','wchill',
     ]
+    
     try:        
         # matching column data
         col_names = [x for x in col_MO if x in col_SMS]
@@ -71,7 +72,7 @@ def get_matching_columns():
         print("Something went wrong with getting matching columns")
 
 # find the frequency of each station type
-def get_frequency(type):
+def get_frequency(type: str) -> int:
     try:
         if type=='SMS':
             freq = 144
@@ -80,31 +81,34 @@ def get_frequency(type):
         else:
             raise ValueError
         return freq
+    
     except ValueError:
         print("Unidentified Station Type")
     except: # noqa: E722
         print("Something went wrong with getting the frequency")
 
-def qc1_file_pass(file,col_names):
+def set_timestamp(file: Path,col_names: list[str]) -> pd.DataFrame:
     try:
         df = pd.read_csv(file, usecols=col_names)
         df = df[col_names]
         df['qc_level'] = 1
-
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         df = df.set_index("timestamp")
         # converts utc -> local time
         df = df.tz_convert("Asia/Manila")
         df.to_csv(file)
         return df
+    
     except: # noqa: E722
         print("Something went wrong with updating the CSV file")
 
-def main_qc1(yyyy,mm):
+def main_qc1(yyyy: int,mm: int):
     # get files from monthly directory
     files = glob.glob(os.path.join(main_dir, f"{yyyy}/{mm}/*.csv"))
-    # create a csv to store quality check data
-    check_df = pd.DataFrame(columns=['qc_level','stn_id','qc1-missing_perc','qc1-expected_obs','qc1-actual_obs'])
+
+    check_df = pd.DataFrame(columns=['qc_level','stn_id',
+            'qc1-missing_perc','qc1-expected_obs','qc1-actual_obs'])
+
     # get the number of days in the month
     ndays = monthrange(int(yyyy), int(mm))[1]
 
@@ -116,10 +120,11 @@ def main_qc1(yyyy,mm):
 
         # get matching columns
         col_names = get_matching_columns()
-        obs_df = qc1_file_pass(file,col_names)
+        obs_df = set_timestamp(file,col_names)
 
         stn_type = get_stn_type(stn_file,int(stn_id[0]))
         freq = get_frequency(stn_type)
+
         # !! EXCEPTION: Temporary Solution until Station 36 figures it out
         if int(stn_id[0])==36:
             freq = 144
