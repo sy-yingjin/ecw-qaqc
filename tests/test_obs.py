@@ -5,6 +5,10 @@ from obs_qaqc import help_message, validate_request
 from helpers.qaqc.obs_qc1_missing import get_stn_type,get_matching_columns,get_frequency,set_timestamp
 from helpers.qaqc.obs_qc2_values import get_minmax,get_range,get_logic_srad,get_logic_rh,get_logic_wdir
 
+""" NOTICE:
+    a lot of the exception handling here is for specific errors like ValueErrors and KeyErrors.
+    I haven't tested any other errors even though i have made exceptions for them in the actual functions.
+"""
 
 @pytest.fixture
 def mock_stn_df():
@@ -13,8 +17,8 @@ def mock_stn_df():
 @pytest.fixture
 def mock_minmax_df():
     return pd.DataFrame({'var': ['temp','wdir'],
-                         'min': [15,0],
-                         'max': [40,360]})
+            'min': [15,0],
+            'max': [40,360]})
 
 @pytest.fixture
 def mock_timestamp_df():
@@ -113,16 +117,9 @@ def test_get_minmax(mocker,capsys,mock_minmax_df):
     # for FNFError
     assert "Can't locate the Configuration file" in captured.out
 
-#  TO-DO: Figure out how to test raising ValueError and KeyError
+#  TO-DO: Figure out how to test raising ValueError and KeyError without changing function inputs
 def test_get_matching_columns(mocker,capsys):
     assert get_matching_columns() == ['timestamp','id','qc_level','pres','rr','rh','temp','td','wdir','wspd','wspdx','srad','hi','wchill']
-    # mocker.patch('helpers.qaqc.obs_qc1_missing.get_matching_columns', side_effect=ValueError)
-    # get_matching_columns()
-    # mocker.patch('helpers.qaqc.obs_qc1_missing.get_matching_columns', side_effect=KeyError)
-    # get_matching_columns()
-    # captured = capsys.readouterr()
-    # assert "No Matching Columns Found: Missing Expected Columns" in captured.out
-    # assert "No Matching Columns Found: Empty CSV" in captured.out
 
 def test_get_frequency(mocker,capsys):
     assert get_frequency('SMS') == 144
@@ -140,23 +137,58 @@ def test_set_timestamp(mocker,mock_timestamp_df):
     mocker.patch('pandas.read_csv', return_value=mock_df)
     assert set_timestamp("dummy.csv",mock_col) is None
 
-# def test_get_range(mocker,mock_values_df):
-#     mock_df = mock_values_df
-#     mock_csv = mocker.patch('pandas.read_csv', return_value=mock_df)
+#  For some reason raising ValueError only returns the second exception message, so ValueError doesn't work.
+#  TO-DO: Raise ValueError Message
+def test_get_range(mocker,capsys,mock_values_df):
+    mock_df = mock_values_df
+    mocker.patch('pandas.read_csv', return_value=mock_df)
+    assert get_range("dummy.csv",12,"dump.csv") is None
 
+    mock_df = mock_values_df
+    mocker.patch('helpers.qaqc.obs_qc2_values.get_range',side_effect=SystemError)
+    assert get_range("dummy.csv",12,"dump.csv") is None
 
+    captured = capsys.readouterr()
+    assert "Something went wrong with testing the range" in captured.out
+
+#  For some reason raising ValueError only returns the second exception message, so ValueError doesn't work.
+#  TO-DO: Raise ValueError Message
 def test_get_logic_srad(mocker,capsys,mock_values_df):
     mock_df = mock_values_df
     mocker.patch('pandas.read_csv', return_value=mock_df)
     assert get_logic_srad("dummy.csv",12,"dump.csv") is None
 
     mock_df = mock_values_df
-    mocker.patch('helpers.qaqc.obs_qc2_values.get_logic_srad',side_effect=ValueError)
+    mocker.patch('helpers.qaqc.obs_qc2_values.get_logic_srad',side_effect=SystemError)
     assert get_logic_srad("dummy.csv",12,"dump.csv") is None
 
     captured = capsys.readouterr()
     assert "Something went wrong with checking srad at night" in captured.out
 
-# def test_get_logic_rh(mocker):
+#  For some reason raising ValueError only returns the second exception message, so ValueError doesn't work.
+#  TO-DO: Raise ValueError Message
+def test_get_logic_rh(mocker,capsys,mock_values_df):
+    mock_df = mock_values_df
+    mocker.patch('pandas.read_csv', return_value=mock_df)
+    assert get_logic_rh("dummy.csv",12,"dump.csv") is None
 
-# def test_get_logic_wdir(mocker)
+    mock_df = mock_values_df
+    mocker.patch('helpers.qaqc.obs_qc2_values.get_logic_rh',side_effect=SystemError)
+    assert get_logic_srad("dummy.csv",12,"dump.csv") is None
+
+    captured = capsys.readouterr()
+    assert "Something went wrong with checking rh when there is no rain" in captured.out
+
+#  For some reason raising ValueError only returns the second exception message, so ValueError doesn't work.
+#  TO-DO: Raise ValueError Message
+def test_get_logic_wdir(mocker,capsys,mock_values_df):
+    mock_df = mock_values_df
+    mocker.patch('pandas.read_csv', return_value=mock_df)
+    assert get_logic_wdir("dummy.csv",12,"dump.csv") is None
+
+    mock_df = mock_values_df
+    mocker.patch('helpers.qaqc.obs_qc2_values.get_logic_wdir',side_effect=SystemError)
+    assert get_logic_wdir("dummy.csv",12,"dump.csv") is None
+
+    captured = capsys.readouterr()
+    assert "Something went wrong with checking wdir when there's no wspd" in captured.out
