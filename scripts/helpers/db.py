@@ -22,11 +22,11 @@ DB_BAK_CONFIG = {
 }
 
 DB_ENGINE = sa.create_engine(
-    f'postgresql+psycopg2://{DB_CONFIG["user"]}:{DB_CONFIG["password"]}@{DB_CONFIG["host"]}:{DB_CONFIG["port"]}/{DB_CONFIG["dbname"]}'
+    f"postgresql+psycopg2://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['dbname']}"
 )
 
 DB_BAK_ENGINE = sa.create_engine(
-    f'postgresql+psycopg2://{DB_BAK_CONFIG["user"]}:{DB_BAK_CONFIG["password"]}@{DB_BAK_CONFIG["host"]}:{DB_BAK_CONFIG["port"]}/{DB_BAK_CONFIG["dbname"]}'
+    f"postgresql+psycopg2://{DB_BAK_CONFIG['user']}:{DB_BAK_CONFIG['password']}@{DB_BAK_CONFIG['host']}:{DB_BAK_CONFIG['port']}/{DB_BAK_CONFIG['dbname']}"
 )
 
 
@@ -36,6 +36,7 @@ def get_data(table_name, start_date, end_date):
         WHERE TIMESTAMP BETWEEN '{start_date}' AND '{end_date}'
         """
     return pd.read_sql(sql_query, DB_BAK_ENGINE)
+
 
 def get_stn():
     sql_query = """SELECT id,name,station_type
